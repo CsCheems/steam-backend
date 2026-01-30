@@ -1,0 +1,65 @@
+{
+    "app": {
+    "title": "Tracker de Logros",
+    "subtitle": "Muestra tu progreso de logros a tus amigos.",
+    "brandLabel": "Tracker de Logros de Steam"
+  },
+  "base": {
+    "baseUrlLabel": "URL base del widget",
+    "baseUrlPlaceholder": "https://cscheems.github.io/steam-widget/",
+    "defaultBaseUrl": "https://cscheems.github.io/steam-widget/"
+  },
+  "sections":[
+        {
+            "id": "steamAuth",
+            "title": "Credenciales de Steam",
+            "description": "Ingresa tu Steam Web Key y Steam Id.",
+            "authSection": true,
+            "fields": [
+                {
+                "type": "password",
+                "id": "steam_web_key",
+                "label": "Steam Web Key",
+                "param": "steam_web_key",
+                "placeholder": "Client ID"
+                },
+                {
+                "type": "text",
+                "id": "steam_id",
+                "label": "Steam Id",
+                "param": "steam_id",
+                "placeholder": "Client Secret"
+                }
+            ]
+        },
+        {
+        "title": "Streamerbot",
+        "description": "Configuración de conexión con Streamerbot, esto permite a cambiar la categoria automaticamente en el momento que abras un juego en Steam.",
+        "fields": [
+            {
+                    "type": "switch",
+                    "id": "allowSb",
+                    "label": "Conectar con Streamerbot",
+                    "param": "allowSb",
+                    "default": false
+                },
+            {
+                "type": "text",
+                "id": "hostInput",
+                "label": "Host",
+                "param": "hostInput",
+                "default": "127.0.0.1",
+                "placeholder": "127.0.0.1"
+            },
+            {
+                "type": "text",
+                "id": "portInput",
+                "label": "Puerto",
+                "param": "portInput",
+                "default": "8080",
+                "placeholder": "8080"
+            }
+        ]
+        }
+    ]
+}
