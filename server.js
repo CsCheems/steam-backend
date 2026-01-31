@@ -8,9 +8,6 @@ dotenv.config();
 const app = express();
 app.use(cors());
 
-let STEAM_KEY = "";
-let STEAM_ID = "";
-
 let cache = {
   lastUpdate: 0,
   data: null,
@@ -29,7 +26,7 @@ async function fetchFromSteam(url) {
 
 // ===OBTENER DATOS===
 
-async function obtenJuegoActual() {
+async function obtenJuegoActual(STEAM_KEY, STEAM_ID) {
     const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_KEY}&steamids=${STEAM_ID}`;
     const data = await fetchFromSteam(url);
     const player = data.response.players[0];
@@ -44,7 +41,7 @@ async function obtenJuegoActual() {
 
 //obtenJuegoActual();
 
-async function obtenerTiempoDeJuego(appid) {
+async function obtenerTiempoDeJuego(appid, STEAM_KEY, STEAM_ID) {
     const url = `http://api.steampowered.com/IPlayerService/GetRecentlyPlayedGames/v0001/?key=${STEAM_KEY}&steamid=${STEAM_ID}&format=json`;
     const data = await fetchFromSteam(url);
     //console.log(data.response.games);
@@ -61,7 +58,7 @@ async function obtenerTiempoDeJuego(appid) {
 
 //obtenerTiempoDeJuego(2357570);
 
-async function obtenLogros(appid){
+async function obtenLogros(appid, STEAM_KEY, STEAM_ID){
     const url = `http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=${appid}&key=${STEAM_KEY}&steamid=${STEAM_ID}&l=latam`;
     const data = await fetchFromSteam(url);
     //console.log(data.playerstats.achievements);
@@ -71,7 +68,7 @@ async function obtenLogros(appid){
 
 //obtenLogros(2357570);
 
-async function obtenerEsquema(appid) {
+async function obtenerEsquema(appid, STEAM_KEY) {
     const url = `https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=${STEAM_KEY}&appid=${appid}&l=latam`;
     const data = await fetchFromSteam(url);
     return data.game.availableGameStats?.achievements || [];
@@ -79,7 +76,7 @@ async function obtenerEsquema(appid) {
 
 //obtenerEsquema(2357570);
 
-function obtenUltimoLogro(userAch, schemaAch){
+function obtenUltimoLogro(userAch, schemaAch, count){
 
     userAch = Array.isArray(userAch) ? userAch : [];
     schemaAch = Array.isArray(schemaAch) ? schemaAch : [];
@@ -92,7 +89,7 @@ function obtenUltimoLogro(userAch, schemaAch){
 
     if(!desbloqueados.length) return [];
 
-    let ultimos3 = desbloqueados.slice(0,5);
+    let ultimos3 = desbloqueados.slice(0,count);
 
     return ultimos3.map(logro =>{
         const meta = schemaAch.find(
@@ -114,16 +111,17 @@ function obtenUltimoLogro(userAch, schemaAch){
 app.get("/api/steam/achievements", async (req, res) => {
     try{
 
-        STEAM_ID = req.query.steamid;
-        STEAM_KEY = req.query.steamkey;
+        const STEAM_ID = req.query.steamid;
+        const STEAM_KEY = req.query.steamkey;
+        const count = req.query.numeroLogros;
 
         const now = Date.now();
 
-        if(cache.data && now - cache.lastUpdate < CACHE_TIME){
-            return res.json(cache.data);
+        if(cache[STEAM_ID] && now - cache[STEAM_ID].lastUpdate < CACHE_TIME){
+            return res.json(cache[STEAM_ID].data);
         }
 
-        const juego = await obtenJuegoActual();
+        const juego = await obtenJuegoActual(STEAM_KEY, STEAM_ID);
 
         if(!juego){
             const idle ={
@@ -131,16 +129,16 @@ app.get("/api/steam/achievements", async (req, res) => {
                 message: "Listo para monitorear",
             };
 
-            cache = {lastUpdate: now, data: idle}
+            cache[STEAM_ID] = {lastUpdate: now, data: idle}
             return res.json(idle);
         }
 
-        const playtime = await obtenerTiempoDeJuego(juego.appid);
-        const logros = await obtenLogros(juego.appid);
-        const esquema = await obtenerEsquema(juego.appid);
+        const playtime = await obtenerTiempoDeJuego(juego.appid, STEAM_KEY, STEAM_ID);
+        const logros = await obtenLogros(juego.appid, STEAM_KEY, STEAM_ID);
+        const esquema = await obtenerEsquema(juego.appid, STEAM_KEY);
         const desbloqueado = logros.filter((a) => a.achieved == 1).length;
         const total = logros.length;
-        const ultimoLogro = obtenUltimoLogro(logros, esquema);
+        const ultimoLogro = obtenUltimoLogro(logros, esquema, count);
 
         const payload = {
             active: true,
@@ -162,7 +160,7 @@ app.get("/api/steam/achievements", async (req, res) => {
 
         console.log(payload);
 
-        cache = {lastUpdate: now, data: payload};
+        cache[STEAM_ID] = {lastUpdate: now, data: payload};
         res.json(payload);
     }catch(error){
         console.error("Steam Error:", error);
@@ -171,7 +169,7 @@ app.get("/api/steam/achievements", async (req, res) => {
             message: "Error consultando Steam",
         });
     }
-})
+});
 
 app.get('/api/xbox/callback', async (req, res) => {
     console.debug('Howdy xbox');
