@@ -26,7 +26,7 @@ async function fetchFromSteam(url) {
     }
 
     const data = await res.json();
-    console.log("Steam JSON:", data);
+    console.log("Steam JSON: ", data.response.players[0]);
     return data;
 }
 
@@ -36,7 +36,7 @@ async function obtenJuegoActual(STEAM_KEY, STEAM_ID) {
     const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_KEY}&steamids=${STEAM_ID}`;
     const data = await fetchFromSteam(url);
     const player = data.response.players[0];
-    //console.log(player);
+    
     if(!player.gameid) return null;
 
     return{
