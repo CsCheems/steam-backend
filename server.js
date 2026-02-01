@@ -26,7 +26,7 @@ async function fetchFromSteam(url) {
     }
 
     const data = await res.json();
-    console.log("Steam JSON: ", data.response.players[0]);
+    console.log("Steam JSON: ", data.response.players);
     return data;
 }
 
