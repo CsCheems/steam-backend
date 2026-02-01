@@ -81,11 +81,15 @@ function obtenUltimoLogro(userAch, schemaAch, count){
     userAch = Array.isArray(userAch) ? userAch : [];
     schemaAch = Array.isArray(schemaAch) ? schemaAch : [];
 
+    console.log("COUNT: ", count);
+    console.log("TOTAL LOGROS: ", userAch.length);
+
     const desbloqueados = userAch
     .filter((a) => a.achieved == 1)
     .sort((a,b) => b.unlocktime - a.unlocktime);
 
-    //console.log(desbloqueado);
+    console.log("DESBLOQUEADOS: ", desbloqueados.length);
+    console.log("TOP 5 UNLOCKTIMES: ", desbloqueados.slice(0,5).map(x=>x.unlocktime));
 
     if(!desbloqueados.length) return [];
 
