@@ -19,10 +19,15 @@ const CACHE_TIME = 10_000;
 
 async function fetchFromSteam(url) {
     const res = await fetch(url);
-    console.log(res);
-    if(!res.ok)
-        throw new Error("Steam API error");
-    return res.json();
+    
+    if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        throw new Error(`Steam API error ${res.status}: ${errText}`);
+    }
+
+    const data = await res.json();
+    console.log("Steam JSON:", data);
+    return data;
 }
 
 // ===OBTENER DATOS===
