@@ -15,6 +15,8 @@ let cache = {
 
 const CACHE_TIME = 10_000;
 
+let estadoAnterior = '';
+
 // ===HELPERS===
 
 async function fetchFromSteam(url) {
@@ -26,7 +28,7 @@ async function fetchFromSteam(url) {
     }
 
     const data = await res.json();
-    console.log("Steam JSON: ", data);
+    //console.log("Steam JSON: ", data);
     return data;
 }
 
@@ -82,38 +84,90 @@ async function obtenerEsquema(appid, STEAM_KEY) {
 
 //obtenerEsquema(2357570);
 
-function obtenUltimoLogro(userAch, schemaAch, count){
+// function obtenUltimoLogro(userAch, schemaAch, count){
 
-    userAch = Array.isArray(userAch) ? userAch : [];
-    schemaAch = Array.isArray(schemaAch) ? schemaAch : [];
+//     userAch = Array.isArray(userAch) ? userAch : [];
+//     schemaAch = Array.isArray(schemaAch) ? schemaAch : [];
 
-    console.log("COUNT: ", count);
-    console.log("TOTAL LOGROS: ", userAch.length);
+//     // console.log("COUNT: ", count);
+//     // console.log("TOTAL LOGROS: ", userAch.length);
 
-    const desbloqueados = userAch
-    .filter((a) => a.achieved == 1)
-    .sort((a,b) => b.unlocktime - a.unlocktime);
+//     const desbloqueados = userAch
+//     .filter((a) => a.achieved == 1)
+//     .sort((a,b) => b.unlocktime - a.unlocktime);
 
-    console.log("DESBLOQUEADOS: ", desbloqueados.length);
-    console.log("TOP 5 UNLOCKTIMES: ", desbloqueados.slice(0,5).map(x=>x.unlocktime));
+//     const bloqueados = userAch.filter((a) => a.achieved == 0);
 
-    if(!desbloqueados.length) return [];
+//     console.log("BLOQUEADOS: ", bloqueados.slice(0,count));
 
-    let ultimos3 = desbloqueados.slice(0,count);
+//     // console.log("LISTADO: ",desbloqueados);
+//     // console.log("DESBLOQUEADOS: ", desbloqueados.length);
+//     // console.log("TOP 5 UNLOCKTIMES: ", desbloqueados.slice(0,5).map(x=>x.unlocktime));
+//     console.log("DESCRIPCION ULTIMO LOGRO: ", desbloqueados[0].description);
 
-    return ultimos3.map(logro =>{
-        const meta = schemaAch.find(
-            s => s.displayName === logro.name
-        );
+//     if(!desbloqueados.length) return [];
 
+//     let ultimos3 = desbloqueados.slice(0,count);
+
+//     return ultimos3.map(logro =>{
+//         const meta = schemaAch.find(
+//             s => s.displayName === logro.name
+//         );
+
+//         return{
+//             name: meta?.displayName || logro.name,
+//             image: meta?.icon || "",
+//             description: logro.description,
+//             unlocktime: logro.unlocktime,
+//         };
+//     });
+// }
+
+function normalizarLogros(userAch = [], schemaAch = []){
+    const mapSchema = new Map(
+        schemaAch.map(s => [s.displayName, s])
+    );
+
+    return userAch.map(logro => {
+        const meta = mapSchema.get(logro.name);
         return{
-            name: meta?.displayName || logro.name,
+            id: logro.name,
+            name: meta.displayName || logro.name,
             image: meta?.icon || "",
-            unlocktime: logro.unlocktime,
+            description: logro.description,
+            achieved: logro.achieved === 1,
+            unlocktime: logro.unlocktime || 0
         };
     });
+}
 
-    
+function clasificarLogros(logros = []){
+    return{
+        desbloqueados: logros
+            .filter(l => l.achieved == 1)
+            .sort((a,b) => b.unlocktime - a.unlocktime),
+        
+        bloqueados: logros.filter((l) => l.achieved == 0)
+    };
+}
+
+function detectarNuevosLogros(prev = [], current = []){
+    if (!Array.isArray(prev) || !Array.isArray(current)) {
+        return [];
+    }
+
+
+    const prevMap = new Map(
+        prev.map(l => [l.id, l.achieved === 1])
+    );
+
+    return current.filter(l =>
+        l.achieved === 1 && prevMap.get(l.id) === false
+    );
+}
+
+function obtenUltimoLogro(desbloqueados, count){
+    return desbloqueados.slice(0, count);
 }
 
 // ===ENDPOINT PRINCIPAL===
@@ -123,7 +177,7 @@ app.get("/api/steam/achievements", async (req, res) => {
 
         const STEAM_ID = req.query.steamid;
         const STEAM_KEY = req.query.steamkey;
-        const count = req.query.numeroLogros;
+        const count = Number(req.query.numeroLogros || 3);
 
         const now = Date.now();
 
@@ -148,7 +202,17 @@ app.get("/api/steam/achievements", async (req, res) => {
         const esquema = await obtenerEsquema(juego.appid, STEAM_KEY);
         const desbloqueado = logros.filter((a) => a.achieved == 1).length;
         const total = logros.length;
-        const ultimoLogro = obtenUltimoLogro(logros, esquema, count);
+        //const ultimoLogro = obtenUltimoLogro(logros, esquema, count);
+
+        const estadoActual = normalizarLogros(logros, esquema);
+
+        const {desbloqueados, bloqueados} = clasificarLogros(estadoActual);
+
+        const ultimos = obtenUltimoLogro(desbloqueados, count)
+
+        const nuevos = detectarNuevosLogros(estadoAnterior, estadoActual);
+
+        estadoAnterior = estadoActual;
 
         const payload = {
             active: true,
@@ -162,15 +226,16 @@ app.get("/api/steam/achievements", async (req, res) => {
                 total,
                 percentage: total ? Math.round((desbloqueado/total) * 100) : 0,
             },
-            lastAchievements: ultimoLogro || {
+            lastAchievements: ultimos || {
                 name: "Sin logros recientes",
-                image: "",
+                image: "https://cscheems.github.io/steam-widget/resources/steam_logo.jpg",
             },
+            newAchievements: nuevos,
+            blockedAchievementsCount: bloqueados.length
         };
 
-        console.log(payload);
+        cache[STEAM_ID] = {lastUpdate: now, data: payload, estadoAnterior: estadoActual};
 
-        cache[STEAM_ID] = {lastUpdate: now, data: payload};
         res.json(payload);
     }catch(error){
         console.error("Steam Error:", error);
