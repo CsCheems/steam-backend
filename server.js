@@ -66,8 +66,8 @@ async function obtenerTiempoDeJuego(appid, STEAM_KEY, STEAM_ID) {
 
 //obtenerTiempoDeJuego(2357570);
 
-async function obtenLogros(appid, STEAM_KEY, STEAM_ID){
-    const url = `http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=${appid}&key=${STEAM_KEY}&steamid=${STEAM_ID}&l=latam`;
+async function obtenLogros(appid, STEAM_KEY, STEAM_ID, LANGUAGE){
+    const url = `http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=${appid}&key=${STEAM_KEY}&steamid=${STEAM_ID}&l=${LANGUAGE}`;
     const data = await fetchFromSteam(url);
     //console.log(data.playerstats.achievements);
 
@@ -76,8 +76,8 @@ async function obtenLogros(appid, STEAM_KEY, STEAM_ID){
 
 //obtenLogros(2357570);
 
-async function obtenerEsquema(appid, STEAM_KEY) {
-    const url = `https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=${STEAM_KEY}&appid=${appid}&l=latam`;
+async function obtenerEsquema(appid, STEAM_KEY, LANGUAGE) {
+    const url = `https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=${STEAM_KEY}&appid=${appid}&l=${LANGUAGE}`;
     const data = await fetchFromSteam(url);
     return data.game.availableGameStats?.achievements || [];
 }
@@ -177,6 +177,7 @@ app.get("/api/steam/achievements", async (req, res) => {
 
         const STEAM_ID = req.query.steamid;
         const STEAM_KEY = req.query.steamkey;
+        const LANGUAGE = req.query.language;
         const count = Number(req.query.numeroLogros || 3);
 
         const now = Date.now();
@@ -186,6 +187,8 @@ app.get("/api/steam/achievements", async (req, res) => {
         }
 
         const juego = await obtenJuegoActual(STEAM_KEY, STEAM_ID);
+
+        console.log(juego);
 
         if(!juego){
             const idle ={
@@ -198,8 +201,8 @@ app.get("/api/steam/achievements", async (req, res) => {
         }
 
         const playtime = await obtenerTiempoDeJuego(juego.appid, STEAM_KEY, STEAM_ID);
-        const logros = await obtenLogros(juego.appid, STEAM_KEY, STEAM_ID);
-        const esquema = await obtenerEsquema(juego.appid, STEAM_KEY);
+        const logros = await obtenLogros(juego.appid, STEAM_KEY, STEAM_ID, LANGUAGE);
+        const esquema = await obtenerEsquema(juego.appid, STEAM_KEY, LANGUAGE);
         const desbloqueado = logros.filter((a) => a.achieved == 1).length;
         const total = logros.length;
         //const ultimoLogro = obtenUltimoLogro(logros, esquema, count);
