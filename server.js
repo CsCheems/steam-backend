@@ -193,7 +193,7 @@ app.get("/api/steam/achievements", async (req, res) => {
         if(!juego){
             const idle ={
                 active: false,
-                message: "Listo para monitorear",
+                message: "Ready to Monitor",
             };
 
             cache[STEAM_ID] = {lastUpdate: now, data: idle}
@@ -230,7 +230,7 @@ app.get("/api/steam/achievements", async (req, res) => {
                 percentage: total ? Math.round((desbloqueado/total) * 100) : 0,
             },
             lastAchievements: ultimos || {
-                name: "Sin logros recientes",
+                name: "No recent achievements",
                 image: "https://cscheems.github.io/steam-widget/resources/steam_logo.jpg",
             },
             newAchievements: nuevos,
@@ -244,7 +244,7 @@ app.get("/api/steam/achievements", async (req, res) => {
         console.error("Steam Error:", error);
         res.status(500).json({
             active: false,
-            message: "Error consultando Steam",
+            message: "Error Fetching Steam",
         });
     }
 });
