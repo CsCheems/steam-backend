@@ -188,7 +188,7 @@ app.get("/api/steam/achievements", async (req, res) => {
 
         const juego = await obtenJuegoActual(STEAM_KEY, STEAM_ID);
 
-        console.log(juego);
+        //console.log(juego);
 
         if(!juego){
             const idle ={
@@ -210,6 +210,8 @@ app.get("/api/steam/achievements", async (req, res) => {
         const estadoActual = normalizarLogros(logros, esquema);
 
         const {desbloqueados, bloqueados} = clasificarLogros(estadoActual);
+
+        console.log(bloqueados);
 
         const ultimos = obtenUltimoLogro(desbloqueados, count)
 
@@ -234,7 +236,8 @@ app.get("/api/steam/achievements", async (req, res) => {
                 image: "https://cscheems.github.io/steam-widget/resources/steam_logo.jpg",
             },
             newAchievements: nuevos,
-            blockedAchievementsCount: bloqueados.length
+            blockedAchievementsCount: bloqueados.length,
+            blockedAchievementsData: bloqueados
         };
 
         cache[STEAM_ID] = {lastUpdate: now, data: payload, estadoAnterior: estadoActual};
