@@ -222,6 +222,7 @@ app.get("/api/steam/achievements", async (req, res) => {
         const payload = {
             active: true,
             game:{
+                id: juego.appid,
                 name: juego.name,
                 image: `https://cdn.cloudflare.steamstatic.com/steam/apps/${juego.appid}/header.jpg`,
                 timePlayed: playtime,
