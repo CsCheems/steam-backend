@@ -37,7 +37,7 @@ async function fetchFromSteam(url) {
 async function obtenJuegoActual(STEAM_KEY, STEAM_ID) {
     const url = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=${STEAM_KEY}&steamids=${STEAM_ID}`;
     const data = await fetchFromSteam(url);
-    const player = data.response.players[0];
+    const player = data.response.players[0]; 
     
     if(!player.gameid) return null;
 
@@ -81,47 +81,6 @@ async function obtenerEsquema(appid, STEAM_KEY, LANGUAGE) {
     const data = await fetchFromSteam(url);
     return data.game.availableGameStats?.achievements || [];
 }
-
-//obtenerEsquema(2357570);
-
-// function obtenUltimoLogro(userAch, schemaAch, count){
-
-//     userAch = Array.isArray(userAch) ? userAch : [];
-//     schemaAch = Array.isArray(schemaAch) ? schemaAch : [];
-
-//     // console.log("COUNT: ", count);
-//     // console.log("TOTAL LOGROS: ", userAch.length);
-
-//     const desbloqueados = userAch
-//     .filter((a) => a.achieved == 1)
-//     .sort((a,b) => b.unlocktime - a.unlocktime);
-
-//     const bloqueados = userAch.filter((a) => a.achieved == 0);
-
-//     console.log("BLOQUEADOS: ", bloqueados.slice(0,count));
-
-//     // console.log("LISTADO: ",desbloqueados);
-//     // console.log("DESBLOQUEADOS: ", desbloqueados.length);
-//     // console.log("TOP 5 UNLOCKTIMES: ", desbloqueados.slice(0,5).map(x=>x.unlocktime));
-//     console.log("DESCRIPCION ULTIMO LOGRO: ", desbloqueados[0].description);
-
-//     if(!desbloqueados.length) return [];
-
-//     let ultimos3 = desbloqueados.slice(0,count);
-
-//     return ultimos3.map(logro =>{
-//         const meta = schemaAch.find(
-//             s => s.displayName === logro.name
-//         );
-
-//         return{
-//             name: meta?.displayName || logro.name,
-//             image: meta?.icon || "",
-//             description: logro.description,
-//             unlocktime: logro.unlocktime,
-//         };
-//     });
-// }
 
 function normalizarLogros(userAch = [], schemaAch = []){
     const mapSchema = new Map(
@@ -234,7 +193,7 @@ app.get("/api/steam/achievements", async (req, res) => {
             },
             lastAchievements: ultimos || {
                 name: "No recent achievements",
-                image: "https://cscheems.github.io/steam-widget/resources/steam_logo.jpg",
+                image: "https://widget.chemita.dev/steam-tracker/resource/steam_logo.jpg",
             },
             newAchievements: nuevos,
             blockedAchievementsCount: bloqueados.length,
@@ -252,10 +211,6 @@ app.get("/api/steam/achievements", async (req, res) => {
         });
     }
 });
-
-app.get('/api/xbox/callback', async (req, res) => {
-    console.debug('Howdy xbox');
-})
 
 app.listen(process.env.PORT, () => {
   console.log("Steam Widget Backend running on port", process.env.PORT);
