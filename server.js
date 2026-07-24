@@ -184,6 +184,8 @@ app.get("/api/steam/achievements", async (req, res) => {
                 id: juego.appid,
                 name: juego.name,
                 image: `https://cdn.cloudflare.steamstatic.com/steam/apps/${juego.appid}/header.jpg`,
+                libraryHero: `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${juego.appid}/library_hero.jpg`,
+                verticalCover: `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${juego.appid}/library_600x900_2x.jpg`,
                 timePlayed: playtime,
             },
             progress:{
